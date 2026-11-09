@@ -1,0 +1,293 @@
+---
+title: "Lab 9 – Modeling Melanoma Rates"
+output:
+  html_document:
+    toc: yes
+    df_print: paged
+  pdf_document: default
+  html_notebook:
+    theme: readable
+    toc: yes
+    toc_float: yes
+---
+
+### Assignment Overview
+
+-	Melanoma rates in different U.S. states vary—but what might explain that variation? 
+-	The Melanoma.xlsx file contains melanoma rates, in addition to other potentially related variables from various sources (most of which is from 2014-2017). Note this data includes the 48 contiguous states (excludes Alaska and Hawaii).
+-	We’ll also be investigating a claim made in the cancercenter.com blog linked later regarding possible risk factors for melanomas. Does their claim stack up when we look at the data?
+
+### STEP 0
+
+-	Pre-lab work: Complete the pre-lab tutorials for Lab 9 first: https://stat212-learnr.stat.illinois.edu/ 
+- Don't forget to library the package we've been using all semester!
+
+```{r message=FALSE}
+
+install.packages("ggplot2")
+
+library(ggplot2)
+
+library(tidyverse)
+```
+
+-	Download the Melanoma.xlsx file into the same folder as this RMarkdown file and then import that file into your RMarkdown file.
+
+### Import the dataset
+
+```{r message=FALSE}
+library(readxl)
+Melanoma = read_excel("Melanoma.xlsx")
+
+# Note, your data file should be saved in the same folder as your RMarkdown. 
+# Also match the name of the data reference above with the name of the data file. For example, it might save as Melanoma.xlsx, or Melanoma_1_.xlsx or something else.
+```
+
+### Variables
+
+Each row of this dataset represents one patient being screened, and the following variables were documented for each patient:
+
+- `Name`: State Name
+- `abb`: State Abbreviation
+- `mel`: Number of new melanoma cases per 10,000 people each year
+- `sun`: The average sun exposure in each state, measured in kilojoules per square meter (kJ/m^2)
+- `lat`: Latitude of the center point of the state 
+- `lon`: Longitude of the center point of the state
+- `ocean`: Whether the state borders an ocean or not
+- `temp`: Average daily high temperature year around
+- `pop`: State Population
+- `density`: Average number of state residents per square miles
+- `age`: Average age of state residents
+- `white`: Proportion of state residents that identify as both “white” and “non-hispanic”
+- `income`: Average income of state residents
+
+
+## Question 1
+
+Let’s start by creating a map of the United States and coloring each state by the Melanoma Rate. This should give us a little more insight to where melanoma rates are high.
+
+Start by installing and librarying the package `maps`
+
+```{r}
+install.packages("maps")
+library(maps)
+```
+
+These packages contains quite a bit of map data, but we’re only going to be working on map data from U.S. states by running the following command.
+
+```{r}
+MainStates = map_data("state")
+```
+
+Next, we want to merge this data frame into our Melanoma data frame. But to do that, we need a common column. Our `Name` column in Melanoma contains state names, but in MainStates, it's called `region`. Run the following command (just copy+paste it in and run it) to change the MainStates data frame column to `Name`. Then, we will be able to easily match up these columns when we merge the data frames.
+
+```{r}
+names(MainStates)[names(MainStates) == "region"] = "Name"
+```
+
+Now we're ready to merge! Run the following function (from the dplyr package) to merge our data. Go ahead and save this merged data frame under a different name (suggested Melanoma_Map) because the dimensions are going to radically change, and it will be nice to still have the original available in this session!
+
+```{r}
+Melanoma_Map <- inner_join(MainStates, Melanoma, by = "Name")
+```
+
+We’re finally ready to **create the map! Here are your instructions:**
+
+-	Make a ggplot with Melanoma_Map as your data
+-	In the aes line, set `x = long`, `y = lat.x`, `group = group`, and `fill = mel`
+  -	Note, these are variable names from `Melanoma_Map`, not from `Melanoma`
+-	Use geom_polygon(), and set color = "black" inside this argument to insert black state borders
+-	Use a fill color palette (with distiller) to choose a custom color palette. The default palette is blues, but let’s take this opportunity to pick a palette with more dynamic differences on each side of the scale!
+-	Add a background theme that provides a blank background (check the "Customizing ggplot2 tutorial, or search online for one!)
+-	Add an appropriate title
+
+```{r}
+ggplot(data = Melanoma_Map, aes(x = long, y = lat.x, group = group, fill = mel)) +
+  geom_polygon(color = "black") +
+  scale_fill_distiller(palette = "RdYlBu", direction = 1) +
+  theme_minimal() + 
+  ggtitle("Melanoma Rates Across U.S. States") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+```
+
+**Which states stand out as having the highest melanoma rates?** 
+
+
+
+**Would you say there is a geographical pattern to melanoma rates, or not?**
+
+
+
+---
+
+## Take a look at this cancer center blogpost before proceeding
+
+Open the following short article about melanoma rates across U.S. States and read the first three paragraphs: https://www.cancercenter.com/community/blog/2016/05/unhealthiest-states-for-skin-cancer-risk-may-surprise-you 
+
+This article is considering different possible factors that might explain why some states have higher melanoma rates. One particular factor suggested by Dr. Charles Komen Brown is that states with lower sun exposure on average tend to have higher melanoma rates. He offers one possible causal explanation by saying it is because residents in this state are not used to thinking about sun exposure and skin protection. 
+
+---
+
+_Be sure to use the original Melanoma data you imported from this point on. The Melanoma_Map dataframe you created was only for Question 1. _
+
+## Question 2
+
+Next, let's look at the relationship between a state’s average sun exposure and a state’s melanoma rate. Create a scatterplot using sun exposure as the predictor variable and melanoma rate as the response variable. However, in place of using geom_point, substitute in the following geom code:
+
+`geom_text(aes(label=Abb),hjust=0, vjust=0, size = 3, fontface = 2)`
+
+In addition:
+
+-	Add a best fit line (Standard error shading optional, Color choice up to you)
+-	Add a title 
+-	Use the theme_classic() theme style (to provide a blank background)
+-	Adjust the x and y axis titles to be fully written in 1-3 words (rather than the default variable abbreviations)
+
+**Please include an image of this scatterplot in the report**
+
+
+**Which states have higher melanoma rates—those with more sun exposure on average, or less sun exposure?**
+ 
+
+**Which one or two states appear to have the largest residuals in this model?**
+
+
+```{r}
+ggplot(data = Melanoma, aes(x = sun, y = mel)) +
+  geom_text(aes(label = abb), hjust = 0, vjust = 0, size = 3, fontface = 2) +
+  geom_smooth(method = "lm", se = TRUE, color = "blue") +
+  theme_classic() +
+  ggtitle("Scatterplot of Sun Exposure and Melanoma Rate") +
+  xlab("Sun Exposure") +
+  ylab("Melanoma Rate")
+```
+
+
+
+---
+
+## Question 3
+
+Now, create a simple linear model with sun exposure as a predictor of melanoma rate.
+
+**Report the summary output of this model**
+
+```{r}
+model <- lm(mel ~ sun, data = Melanoma)
+summary(model)
+```
+
+**Interpret the (multiple) r-squared value** _(perhaps try the fill in the blank template we learned in chapter 13)_
+
+
+**Is there evidence that average state sun exposure and state melanoma rate have at least some linear association?** _(Don’t just say “reject” or “fail to reject” the null hypothesis—I’d recommend using the interpretational language we learned in Chapter 2)._
+
+
+---
+
+## Question 4
+
+Let’s look at some other possible predictors of melanoma rate: Average temperature, Average age, and Proportion of white, non-hispanic residents. Create a simple linear model for _each_ of these numeric predictors (i.e., create three simple linear models) and look at the output. 
+
+```{r}
+model_temperature <- lm(mel ~ temp, data = Melanoma)
+model_age <- lm(mel ~ age, data = Melanoma)
+model_proportion_white <- lm(mel ~ white, data = Melanoma)
+
+summary(model_temperature)
+summary(model_age)
+summary(model_proportion_white)
+```
+
+**Are any of these three variables stronger predictors of melanoma rate than sun exposure? Explain. (there are at least two good ways you could decide this, but provide at least one).**
+
+**Create a scatterplot of the strongest predictor from these three. Again, use state abbreviations in place of points. Follow all formatting guidelines from question 1. Include this plot in your report.**
+
+```{r}
+ggplot(Melanoma, aes(x = white, y = mel)) +
+  geom_text(aes(label = abb), hjust = 0, vjust = 0, size = 3, fontface = 2) +
+  geom_smooth(method = "lm", se = TRUE, color = "purple") + 
+  labs(
+    title = "Melanoma Rate vs. Proportion of White, Non-Hispanic Residents",
+    x = "White Proportion",
+    y = "Melanoma Rate"
+  ) +
+  theme_classic()
+```
+
+**Briefly interpret the direction of this relationship and the strength of this relationship**
+
+
+
+---
+
+## Question 5
+
+While it is possible to create a model with two numeric predictors, let’s focus on the simpler case of using one numeric predictor with one binary predictor. 
+
+Using an ifelse statement, create a new variable in the dataset called white_binary that records “High” if the state’s proportion of residents being “white, non-hispanic” is above 0.7 and “Low” if the proportion is below 0.7.
+
+**Write your ifelse statement code**
+
+```{r}
+Melanoma$white_binary <- ifelse(Melanoma$white > 0.7, "High", "Low")
+```
+
+**Create a scatterplot with Sun exposure on the x axis, color the data points based on whether the proportion of white residents is above 0.7 or not, and put Melanoma rate on the y axis.**
+
+-	Continue to use the state abbreviations in place of points.
+-	Add best fit lines for each group (i.e., visualize what an interaction model would look like).
+-	Add an appropriate title
+-	Adjust the axes labels. Also adjust the color legend to say “Proportion White.” You can do that by entering a color = “…” argument into the labs function.
+
+```{r}
+ggplot(Melanoma, aes(x = sun, y = mel, color = white_binary)) +
+  geom_smooth(method = "lm", aes(group = white_binary)) +
+  geom_text(aes(label = abb), hjust = 0, vjust = 0, size = 3, fontface = 2) +
+  labs(
+    title = "Melanoma Rate vs. Sun Exposure by Proportion White",
+    x = "Sun Exposure",
+    y = "Melanoma Rate",
+    color = "Proportion White"
+  ) +
+  theme_classic()
+```
+
+---
+
+## Question 6
+
+In the previous question, we plotted an interaction model (allowing for different slopes). Now, create an linear model with these same 2 predictors (the sun exposure variable, and white_binary) that includes an interaction term.
+
+**Include the interaction model summary here.**
+
+```{r}
+model_interaction <- lm(mel ~ sun * white_binary, data = Melanoma)
+summary(model_interaction)
+```
+
+**Does the relationship between a state’s average sun exposure and that state’s melanoma rate appear to be dependent on the proportion of white, non-hispanic residents? Justify your answer using your model summary.** _It also may help you to consult your graph from the previous question to see how this visual relates to the model output._
+
+
+---
+
+## Question 7
+
+Now, create an additive model for Sun exposure and white_binary as predictors of Melanoma rate.
+
+**Include the summary of that additive model**
+
+```{r}
+additive_model <- lm(mel ~ sun + white_binary, data = Melanoma)
+summary(additive_model)
+```
+
+**Is there evidence that sun exposure has a linear relationship with melanoma rate if we already know whether the proportion white, non-hispanic residents in a state is above or below 0.7? Briefly justify**
+
+
+**Contextually, how might the proportion of white, non-hispanic residents act as a confounder to the association between sun exposure and melanoma rate? (Check back to Chapter 9 and look for the confounding diagram. Think about what that might look like here!).**
+
+
+
+
