@@ -1,6 +1,6 @@
 # STAT212 Labs
 
-Personal private archive of STAT212 lab work by Xiaoxi Chen. Includes Lab 1–9 materials, reports, R/R Markdown code, and the associated data available in the supplied local folder.
+Personal archive of STAT212 lab work by Xiaoxi Chen. Includes Lab 1–9 materials, reports, R/R Markdown code, and the associated data available in the supplied local folder.
 
 ## Contents
 
